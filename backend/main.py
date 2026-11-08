@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.api.v1.endpoints import dreams, incubation, symbols, narration
+from api.v1.endpoints import dreams, incubation, incubation, symbols, narration
 from app.core.security import settings
 from supabase import create_client, Client
 
