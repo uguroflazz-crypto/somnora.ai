@@ -1,6 +1,9 @@
-import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "app"))
+import sys
 
-from api.v1.endpoints import dreams, incubation, symbols, narration
+# Lets `uvicorn main:app` from the repo root resolve the backend `app` package.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend"))
+
+from app.main import app  # noqa: E402
+
+__all__ = ["app"]

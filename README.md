@@ -12,47 +12,38 @@ Somnora AI is a high-end dream analysis platform utilizing Edgar Cayce's holisti
 
 ### 1. Supabase Setup
 - Create a new Supabase project.
-- Execute the `supabase_schema.sql` in the SQL Editor.
-- To enable thesemantic search functionality, define the following RPC function in the SQL Editor:
+- Execute `supabase_schema.sql` in the SQL Editor. It creates the tables, RLS policies, the
+  profile-on-signup trigger and the `increment_symbol_count` / `match_dreams` RPCs used by the backend.
+  If the tables already exist, run only the part after `-- Indexes`.
 
-\`\`\`sql
-CREATE OR REPLACE FUNCTION match_dreams(
-  query_embedding vector(1536),
-  match_threshold float,
-  match_count int,
-  filter_user_id uuid
-) RETURNS TABLE (
-  id uuid,
-  content text,
-  similarity float
-) LANGUAGE plpgsql AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    dreams.id,
-    dreams.content,
-    1 - (dreams.embedding <=> query_embedding) AS similarity
-  FROM dreams
-  WHERE dreams.user_id = filter_user_id
-    AND 1 - (dreams.embedding <=> query_embedding) > match_threshold
-  ORDER BY dreams.embedding <=> query_embedding
-  LIMIT match_count;
-END;
-$$;
-\`\`\`
-
-### 2. Backend Deployment (Railway)
-- Deploy the `/backend` folder.
+### 2. Backend Deployment (Docker: Render / Railway)
+- Build from the repo root with the root `Dockerfile` (listens on `$PORT`, default `10000`).
+- Health check path: `/health`.
 - Environment Variables:
-  - \`SUPABASE_URL\`: Your project URL.
-  - \`SUPABASE_SERVICE_ROLE_KEY\`: Your secret service role key.
-  - \`OPENAI_API_KEY\`: Your OpenAI API Key.
+  - `SUPABASE_URL`: Your project URL.
+  - `SUPABASE_SERVICE_ROLE_KEY`: Your secret service role key.
+  - `OPENAI_API_KEY`: Your OpenAI API Key.
+  - `CORS_ORIGINS`: Comma-separated frontend origins, e.g. `https://somnora.vercel.app`.
+- All `/api/v1/*` routes require `Authorization: Bearer <supabase access token>`.
 
 ### 3. Frontend Deployment (Vercel)
-- Deploy the `/frontend` folder.
+- Deploy the `/frontend` folder (framework preset: Vite).
 - Environment Variables:
-  - \`VITE_SUPABASE_URL\`: Same as above.
-  - \`VITE_SUPABASE_ANON_KEY\`: Public anon key.
+  - `VITE_SUPABASE_URL`: Same as above.
+  - `VITE_SUPABASE_ANON_KEY`: Public anon key.
+  - `VITE_API_URL`: Public backend URL, e.g. `https://somnora-api.onrender.com`.
+
+### Local Development
+```bash
+# backend (from repo root)
+py -3.13 -m venv backend/.venv && backend/.venv/Scripts/pip install -r backend/requirements-dev.txt
+backend/.venv/Scripts/python -m uvicorn backend.main:app --port 8000 --reload
+cd backend && .venv/Scripts/python -m pytest
+
+# frontend
+cd frontend && npm install && npm run dev   # proxies /api to localhost:8000
+npm test
+```
 
 ## Technical Highlights
 - **Multi-Layer Analysis**: Custom system prompts ensuring clinical precision mixed with mystical empathy.
